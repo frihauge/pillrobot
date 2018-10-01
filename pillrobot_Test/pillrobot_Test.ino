@@ -1,3 +1,13 @@
+//*** DEFINES *****************************************************************
+#define VERSION "PR_Test_V1, Revision: 1.0, Compile time: " __DATE__ " " __TIME__
+
+
+#define ADC_CHANNEL0_PIN A0
+#define GPIO_PORT0_PIN PB0
+#define USB_PORT0_PIN PC1
+#define TPIC6C595_LATCH_0_PIN 2
+
+
 enum State_enum {STOP, FORWARD, ROTATE_RIGHT, ROTATE_LEFT};
 enum Sensors_enum {NONE, SENSOR_RIGHT, SENSOR_LEFT, BOTH};
  
@@ -15,6 +25,15 @@ void setup() {
     // put your setup code here, to run once:
   Serial.begin(9600);
 
+  pinMode(ADC_CHANNEL0_PIN, INPUT);
+  
+  pinMode(GPIO_PORT0_PIN, INPUT);
+  
+  pinMode(USB_PORT0_PIN, OUTPUT);
+
+  pinMode(TPIC6C595_LATCH_0_PIN, OUTPUT);
+  digitalWrite(TPIC6C595_LATCH_0_PIN, HIGH);
+ 
 }
 
 void loop(){
