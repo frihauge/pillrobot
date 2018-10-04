@@ -1,3 +1,5 @@
+#include <Servo.h>
+
 //*** DEFINES *****************************************************************
 #define VERSION "PR_Test_V1, Revision: 1.0, Compile time: " __DATE__ " " __TIME__
 
@@ -7,7 +9,10 @@
 #define USB_PORT0_PIN PC1
 #define TPIC6C595_LATCH_0_PIN 2
 
+//#Servo 1 180 = Lukket, 0 = åben-
+//#Servo 2 180 = Lukket, 90 = åben
 
+Servo myservo;  // create servo object to control a servo
 enum State_enum {STOP, FORWARD, ROTATE_RIGHT, ROTATE_LEFT};
 enum Sensors_enum {NONE, SENSOR_RIGHT, SENSOR_LEFT, BOTH};
  
@@ -24,6 +29,7 @@ uint8_t state = STOP;
 void setup() {
     // put your setup code here, to run once:
   Serial.begin(9600);
+  myservo.attach(9);  // attaches the servo on pin 9 to the servo object
 
   pinMode(ADC_CHANNEL0_PIN, INPUT);
   
@@ -31,8 +37,6 @@ void setup() {
   
   pinMode(USB_PORT0_PIN, OUTPUT);
 
-  pinMode(TPIC6C595_LATCH_0_PIN, OUTPUT);
-  digitalWrite(TPIC6C595_LATCH_0_PIN, HIGH);
  
 }
 
