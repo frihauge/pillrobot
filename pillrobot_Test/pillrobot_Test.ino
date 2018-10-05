@@ -12,39 +12,52 @@
 //#Servo 1 180 = Lukket, 0 = åben-
 //#Servo 2 180 = Lukket, 90 = åben
 
-Servo myservo;  // create servo object to control a servo
-enum State_enum {STOP, FORWARD, ROTATE_RIGHT, ROTATE_LEFT};
-enum Sensors_enum {NONE, SENSOR_RIGHT, SENSOR_LEFT, BOTH};
+Servo Serv_PillRelase;  // create servo object to control a servo
+Servo Serv_Pillfeed;  // create servo object to control a servo
+
+enum State_enum {STOP, PILLFEED, PILLRELASE, VIBRATE};
+enum Sensors_enum {NONE, PILLFEED, SENSOR_LEFT, BOTH};
+
  
 void state_machine_run(uint8_t sensors);
 void motors_stop();
-void motors_forward();
+void onepillfeed();
 void motors_right();
 void motors_left();
 uint8_t read_IR();
  
 uint8_t state = STOP;
+
+uint16_t PillOK_Count[9] = 0; //Pill release after 0 - 8 vibration 
+
  
 
 void setup() {
     // put your setup code here, to run once:
   Serial.begin(9600);
-  myservo.attach(9);  // attaches the servo on pin 9 to the servo object
-
-  pinMode(ADC_CHANNEL0_PIN, INPUT);
+  Serv_PillRelase.attach(9);  // attaches the servo on pin 9 to the servo object
+  Serv_Pillfeed.attach(8);  // attaches the servo on pin 9 to the servo object
   
-  pinMode(GPIO_PORT0_PIN, INPUT);
   
-  pinMode(USB_PORT0_PIN, OUTPUT);
+  //pinMode(ADC_CHANNEL0_PIN, INPUT);
+  //pinMode(GPIO_PORT0_PIN, INPUT);
+  //pinMode(USB_PORT0_PIN, OUTPUT);
 
  
 }
 
 void loop(){
-  state_machine_run(read_IR());
+
+  if(Serial.available()> 0)
+  {
+    process_serial(Serial.read(),&STATE,TEXT_BUEFFER,&TEXT_BUEFFER_CNT);
+  }
+ 
+  state_machine_run(read_sensor());
  
   delay(10);
 }
+
  
 void state_machine_run(uint8_t sensors) 
 {
@@ -52,12 +65,11 @@ void state_machine_run(uint8_t sensors)
   {
     case STOP:
       if(sensors == NONE){
-        motors_forward();
-        state = FORWARD;
+       state = STOP;
       }
-      else if(sensors == SENSOR_RIGHT){
-        motors_left();
-        state = ROTATE_LEFT;
+      else if(sensors == PILLFEED){
+        onepillfeed();
+        state = PILLFEED;
       }
       else{
         motors_right();
@@ -65,21 +77,19 @@ void state_machine_run(uint8_t sensors)
       }
       break;
        
-    case FORWARD:
-      if(sensors != NONE){
-        motors_stop();
-        state = STOP;
+    case PILLFEED:
+      if(sensors != PILLDEEDED){
+        vibrate();
+        state = VIBRATE;
       }
       break;
- 
-    case ROTATE_RIGHT:
-      if(sensors == NONE || sensors == SENSOR_RIGHT){
-        motors_stop();
-        state = STOP;
+    case PILLREALSE:
+      if(sensors != PILLDEEDED){
+        vibrate();
+        state = VIBRATE;
       }
       break;
- 
-    case ROTATE_LEFT:
+    case VIBRATE:
       if(sensors != SENSOR_RIGHT)
       {
         motors_stop();
@@ -89,25 +99,12 @@ void state_machine_run(uint8_t sensors)
   }
 }
  
-void motors_stop()
-{
-  //code for stopping motors
-}
- 
-void motors_forward()
+
+void onepillfeed()
 {
   //code for driving forward  
 }
- 
-void motors_right()
-{
-  //code for turning right
-}
- 
-void motors_left()
-{
-  //code for turning left
-}
+
  
 uint8_t read_IR()
 {
