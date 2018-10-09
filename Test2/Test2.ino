@@ -1,20 +1,27 @@
 #include "Arduino.h"
 #include <Servo.h>
+#include <EEPROM.h>
+
+
 #define BUTTON_PIN 3
 #define RELDETPIN 3
 #define RELSERVOPIN 8
 #define DELAY 30000 //milliseconds
 #define VIBRATE_PIN 1
+#define PASSCNTSIZ 9
 
 static unsigned long time;
 static unsigned int state;
 static unsigned int button;
 static unsigned int delay_1;
 int incomingByte = 0;
+int addr = 0;
+bool Automode = false;
 const byte releaseinterrupt = 2;
 volatile byte interrupt_state = LOW;
 static unsigned int RetryCount = 0;
-uint16_t Passcount[9] = {0};
+
+uint16_t Passcount[PASSCNTSIZ] = {0};
 
 
 
@@ -37,9 +44,17 @@ void setup()
     // put your setup code here, to run once:
     Serial.begin(9600);
     while (!Serial);// wait for serial port to connect. Needed for native USB port only
+    for (int i = 0; i < PASSCNTSIZ; i++)
+    {
+      EEPROM.get( i, Passcount[i] );
+    }
+
+    
+    
     Serv_PillRelase.attach(RELSERVOPIN);  // attaches the servo on pin 9 to the servo object
     Serial.print("PillRobot Test start up complete");
     attachInterrupt(digitalPinToInterrupt(RELDETPIN), fotoReleaseDet, CHANGE);
+    
 }
 
 void loop()
@@ -49,10 +64,16 @@ bool s = false;
   {
     incomingByte = Serial.read(); // read the incoming byte:
     Serial.println(incomingByte);
-    if (incomingByte == 's')
+    if (incomingByte == 'r')
       state = START;
     if (incomingByte == 'e')
+      Automode = false;
       state = STOP;
+   if (incomingByte == 'a')
+   {
+      Automode = true;
+      state = START;
+   }        
   }
 
     switch (state)
@@ -72,8 +93,19 @@ bool s = false;
       break;
       
     case PILLRELASE_END:
+      for (int i = 0; i < PASSCNTSIZ; i++) {
+        String txt = "Vibrate cnt: " + i;
+        Serial.println(txt + ":"+ Passcount[i]);
+      }
       delay(3000);
-      state = PILLRELASE;
+      if (Automode)
+      {
+        state = PILLRELASE;
+      }
+      else
+      {
+        state = PILLRELASE_END;
+      }
       break;  
       
     case DETEKT_PILLRELEASE:
@@ -131,6 +163,13 @@ void vibrate()
   delay(2000);                  // waits for a second
   digitalWrite(VIBRATE_PIN, LOW);        // sets the digital pin 13 off
   delay(1000); 
+}
+
+void UpdateEEprom()
+{
+  for (int i = 0; i < PASSCNTSIZ; i++) {
+    EEPROM.update(i, Passcount[i]);
+  }
 }
 
 void fotoReleaseDet()
