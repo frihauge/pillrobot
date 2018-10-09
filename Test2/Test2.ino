@@ -4,8 +4,8 @@
 
 
 #define BUTTON_PIN 3
-#define RELDETPIN 3
-#define RELSERVOPIN 8
+#define RELDETPIN 2
+#define RELSERVOPIN 9
 #define DELAY 30000 //milliseconds
 #define VIBRATE_PIN 1
 #define PASSCNTSIZ 9
@@ -39,7 +39,8 @@ void setup()
     time = 0;
     state = STOP;
 
-    pinMode(VIBRATE_PIN, OUTPUT);          // sets the digital pin 1 as output
+    pinMode(VIBRATE_PIN, OUTPUT);           
+    digitalWrite(VIBRATE_PIN, LOW);        
     pinMode(RELDETPIN, INPUT_PULLUP);
     // put your setup code here, to run once:
     Serial.begin(9600);
@@ -52,7 +53,8 @@ void setup()
     
     
     Serv_PillRelase.attach(RELSERVOPIN);  // attaches the servo on pin 9 to the servo object
-    Serial.print("PillRobot Test start up complete");
+    Serv_PillRelase.write(13);
+    Serial.println("PillRobot Test start up complete");
     attachInterrupt(digitalPinToInterrupt(RELDETPIN), fotoReleaseDet, CHANGE);
     
 }
@@ -63,19 +65,22 @@ bool s = false;
   if (Serial.available() > 0) 
   {
     incomingByte = Serial.read(); // read the incoming byte:
-    Serial.println(incomingByte);
+    Serial.println(char(incomingByte));
+    if (incomingByte == 'H')
+      Serial.println("Hello World");
     if (incomingByte == 'r')
-      state = START;
+    {state = START;}
     if (incomingByte == 'e')
-      Automode = false;
-      state = STOP;
+      {Automode = false;
+      state = STOP;}
    if (incomingByte == 'a')
    {
       Automode = true;
       state = START;
    }        
   }
-
+    Serial.println(state);
+    delay(2000);
     switch (state)
     {
     case START:
@@ -88,6 +93,8 @@ bool s = false;
       break;
             
     case PILLRELASE:
+      Serial.println("PILL RELASE");
+      RetryCount = 0;
       onepillrelease();
       state = DETEKT_PILLRELEASE;
       break;
@@ -104,12 +111,13 @@ bool s = false;
       }
       else
       {
-        state = PILLRELASE_END;
+        state = STOP;
       }
       break;  
       
     case DETEKT_PILLRELEASE:
         s = pillreleasedet();
+        Serial.println("PILL DET" + s);
         if (s){
             state = PILLRELASE_END;
             Passcount[RetryCount]++;
@@ -129,12 +137,15 @@ bool s = false;
          
     case VIBRATE:
         RetryCount++;
-        vibrate();
+        //vibrate();
+        Serial.print("Vibrate count ");
+        Serial.println(RetryCount);
+         
         state=PILLRELASE;
         break;
         
     case ALERT:
-        Serial.print("PillRobot In alert mode"); 
+        Serial.println("PillRobot In alert mode"); 
         delay(100);
         state = STOP;
         break;
@@ -144,7 +155,7 @@ bool s = false;
 
 void onepillrelease()
 {
-  int pos = 0;
+/*  int pos = 0;
   for (pos = 0; pos <= 180; pos += 1) { // goes from 0 degrees to 180 degrees
    // in steps of 1 degree
     Serv_PillRelase.write(pos);              // tell servo to go to position in variable 'pos'
@@ -154,7 +165,7 @@ void onepillrelease()
     Serv_PillRelase.write(pos);              // tell servo to go to position in variable 'pos'
     delay(15);                       // waits 15ms for the servo to reach the position
   }
-
+*/
 }
 
 void vibrate()
@@ -174,6 +185,7 @@ void UpdateEEprom()
 
 void fotoReleaseDet()
 {
+  Serial.println("Pill Det Intterupt");
   interrupt_state = true;
 }
 
