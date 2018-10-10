@@ -53,7 +53,7 @@ void setup()
     
     
     Serv_PillRelase.attach(RELSERVOPIN);  // attaches the servo on pin 9 to the servo object
-    Serv_PillRelase.write(13);
+   // Serv_PillRelase.write(13);
     Serial.println("PillRobot Test start up complete");
     attachInterrupt(digitalPinToInterrupt(RELDETPIN), fotoReleaseDet, CHANGE);
     
@@ -61,7 +61,7 @@ void setup()
 
 void loop()
 {
-bool s = false;
+  bool s = false;
   if (Serial.available() > 0) 
   {
     incomingByte = Serial.read(); // read the incoming byte:
@@ -79,8 +79,7 @@ bool s = false;
       state = START;
    }        
   }
-    Serial.println(state);
-    delay(2000);
+    delay(500);
     switch (state)
     {
     case START:
@@ -93,18 +92,20 @@ bool s = false;
       break;
             
     case PILLRELASE:
-      Serial.println("PILL RELASE");
-      RetryCount = 0;
+      Serial.println("STATE PILL RELASE");
       onepillrelease();
       state = DETEKT_PILLRELEASE;
       break;
       
     case PILLRELASE_END:
+      Serial.println("STATE PILLRELEASE END ");
       for (int i = 0; i < PASSCNTSIZ; i++) {
         String txt = "Vibrate cnt: " + i;
-        Serial.println(txt + ":"+ Passcount[i]);
+        Serial.print(txt + ": ");
+        Serial.println(Passcount[i]);
       }
-      delay(3000);
+      delay(500);
+      RetryCount = 0;
       if (Automode)
       {
         state = PILLRELASE;
@@ -117,7 +118,8 @@ bool s = false;
       
     case DETEKT_PILLRELEASE:
         s = pillreleasedet();
-        Serial.println("PILL DET" + s);
+        Serial.print("PILL DET" + s);
+        Serial.println(s);
         if (s){
             state = PILLRELASE_END;
             Passcount[RetryCount]++;
@@ -125,7 +127,10 @@ bool s = false;
           }
           else
           {
+            Serial.print("Retry");
             RetryCount ++;
+            Serial.println(RetryCount);
+       
             delay(1000);
             if (RetryCount <= 8) 
               {state = VIBRATE;}
@@ -138,7 +143,7 @@ bool s = false;
     case VIBRATE:
         RetryCount++;
         //vibrate();
-        Serial.print("Vibrate count ");
+        Serial.print("Vibrate count: ");
         Serial.println(RetryCount);
          
         state=PILLRELASE;
