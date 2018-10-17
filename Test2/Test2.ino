@@ -2,16 +2,15 @@
 #include <Servo.h>
 #include <EEPROM.h>
 
-
-#define BUTTON_PIN 3
 #define RELDETPIN 2
+#define BUTTON_PIN 3
+#define VIBRATE_PIN 4
 #define RELSERVOPIN 9
-
 #define CUPSERVOPIN 8
 #define CUPDETTPIN 3
 
 #define DELAY 30000 //milliseconds
-#define VIBRATE_PIN 4
+
 #define PASSCNTSIZ 9
 
 static unsigned long time;
@@ -187,7 +186,10 @@ void SerialInHandler(char incomingByte)
     case 'v':
       vibrate ();
       break;
-    
+
+    case '1':
+      onepillrelease();
+      break;
     default:
     break;  
     
@@ -200,11 +202,11 @@ void cuprelease(bool state)
   Serv_PillCupRelase.attach(CUPSERVOPIN);  // attaches the servo on pin 9 to the servo object
   if (state)
   {
-    Serv_PillCupRelase.write(-10);
+    Serv_PillCupRelase.write(0);
   }
   else
   {
-    Serv_PillCupRelase.write(90);
+    Serv_PillCupRelase.write(100);
   }
   delay(400);
 
@@ -216,19 +218,19 @@ void onepillrelease()
   int pos = 0;
   cuprelease(false);
   Serv_PillRelase.attach(RELSERVOPIN);  // attaches the servo on pin 9 to the servo object
-
-  for (pos = 100; pos >= 0; pos -= 1) { // goes from 180 degrees to 0 degrees
+ 
+    for (pos = 100; pos >= 0; pos -= 1) { // goes from 180 degrees to 0 degrees
     Serv_PillRelase.write(pos);              // tell servo to go to position in variable 'pos'
     delay(1);                       // waits 15ms for the servo to reach the position
   }  
-  delay(1000);
+  delay(500);
   
-  for (pos = 0; pos <= 100; pos += 1) { // goes from 0 degrees to 180 degrees
+   for (pos = 0; pos <= 100; pos += 1) { // goes from 0 degrees to 180 degrees
    // in steps of 1 degree
     Serv_PillRelase.write(pos);              // tell servo to go to position in variable 'pos'
     delay(1);                       // waits 15ms for the servo to reach the position
   }
-  delay(1000);
+  delay(500);
   Serv_PillRelase.detach();  // deattaches the servo on pin 9 to the servo object
   cuprelease(true);
  
@@ -237,7 +239,7 @@ void onepillrelease()
 void vibrate()
 {
   digitalWrite(VIBRATE_PIN, HIGH);       // sets the digital pin 13 on
-  delay(3000);                  // waits for a second
+  delay(5000);                  // waits for a second
   digitalWrite(VIBRATE_PIN, LOW);        // sets the digital pin 13 off
   delay(1000); 
 }
